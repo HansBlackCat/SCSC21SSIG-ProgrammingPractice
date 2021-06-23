@@ -1,6 +1,7 @@
 [submodule "HansBlackCat/SCSC2021SImpl"]
 	path = HansBlackCat/SCSC2021SImpl
 	url = https://github.com/HansBlackCat/SCSC2021SImpl.git
+	branch = main
 [submodule "dongwook0826/scsc2021_SIG_PP"]
 	path = dongwook0826/scsc2021_SIG_PP
 	url = https://github.com/dongwook0826/scsc2021_SIG_PP.git
