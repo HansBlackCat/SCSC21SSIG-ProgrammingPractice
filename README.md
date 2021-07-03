@@ -21,6 +21,8 @@ Participating members
 
 ### [Problem 01 - Red-Black Tree](./__MainProblem__/Problem01.md)
 
+### [Problem 02 - Solitary Numbers](./__MainProblem__/Problem02.md)
+
 ## Sub Problems
 
 ### [Sub Problem 01 - Exact Cover Problem & Knuth's DLX](./__SubProblem__/SubProblem01.md)
