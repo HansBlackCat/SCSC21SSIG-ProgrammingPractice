@@ -5,7 +5,7 @@
 1. 101번째 소수
 2. 1001번째 소수
 3. 10001번째 소수
-5. 10번째 Factorial Primes</br>
+5. 8번째 Factorial Primes</br>
   Factorial Primes 는 다음과 같은 조건을 만족하는 소수이다.</br>
   ![b](img/Factorial_Prime.gif)</br>
 6. 4번째 Leyland Primes</br>
