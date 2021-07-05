@@ -8,7 +8,7 @@
 5. 10번째 Factorial Primes</br>
   Factorial Primes 는 다음과 같은 조건을 만족하는 소수이다.</br>
   ![b](img/Factorial_Prime.gif)</br>
-6. 5번째 Leyland Primes</br>
+6. 4번째 Leyland Primes</br>
   Leyland Primes 는 다음과 같은 조건을 만족하는 소수이다.</br>
   ![a](img/Leyland_Prime.gif)</br>
   1번째, 2번째 Leyland primes 는 17 과 593 이다.
