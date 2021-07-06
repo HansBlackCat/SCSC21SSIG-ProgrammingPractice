@@ -9,6 +9,7 @@ Windows 10 운영체제에서 Powershell 콘솔을 통해 컴파일했습니다.
 ```Powershell
 ghc RBTreeMain.hs
 ./RBTreeMain.exe
+```
 
 ## 메인 함수 및 모듈 구성
 
