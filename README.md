@@ -23,6 +23,8 @@ Participating members
 
 ### [Problem 02 - Solitary Numbers](./__MainProblem__/Problem02.md)
 
+### [Problem 03 - 명령어 맛보기](./__MainProblem__/Problem03.md)
+
 ## Sub Problems
 
 ### [Sub Problem 01 - Exact Cover Problem & Knuth's DLX](./__SubProblem__/SubProblem01.md)
