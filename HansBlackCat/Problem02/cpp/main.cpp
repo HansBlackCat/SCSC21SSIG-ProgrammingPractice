@@ -3,7 +3,9 @@
 #include <mutex>
 #include <thread>
 #include <cmath>
+#include <memory>
 #include "sieve.hpp"
+#include "sub_prime.hpp"
 
 // clang++ main.cpp -std=c++2a -stdlib=libc++
 
@@ -29,6 +31,8 @@ int main()
   for (auto &i : workers)
     i.join();
 
+  printf("END\n");
+
   std::vector<int> prime_numbers;
   prime_numbers.reserve(MAX);
 
@@ -41,4 +45,7 @@ int main()
   std::cout << prime_numbers[100] << '\n';
   std::cout << prime_numbers[1000] << '\n';
   std::cout << prime_numbers[10000] << '\n';
+
+  std::cout << factorial_prime(8, std::ref(nVec)) << '\n';
+  std::cout << leyland_prime(4, std::ref(nVec)) << '\n';
 }
