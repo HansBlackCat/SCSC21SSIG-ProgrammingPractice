@@ -1,6 +1,6 @@
 # Problem04: Gliński's hexagonal chess
 
->This problem is due to **NEXT WEEKEND (AUG.1st)**<br/>
+>This problem is due to **NEXT WEEKEND (AUG.2nd)**<br/>
 >Good luck with your Summer semester finals!
 
 
