@@ -7,6 +7,8 @@
 ## What is Gliński's hexagonal chess?
 
 ![Gliński's hexagonal chess](./img/660px-Hexagonal_chess.svg.png)
+
+
 Chess with 91 hexes cells.
 
 Gliński's hexagonal chess has similar rules to general chess with some exception.<br/>
