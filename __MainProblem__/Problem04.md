@@ -13,8 +13,8 @@ Chess with 91 hexes cells.
 
 Gliński's hexagonal chess has similar rules to general chess with some exception.<br/>
 Some representative differences are Pawn, Bishop, and Castling. <br/>
-There are 9 pawn in Gliński's hexagonal chess compare to normal square chess.<br/>
-There are 3 Bishop compare to normal chess.<br/>
+There are 9 pawn in Gliński's hexagonal chess compare to normal square chess, 8.<br/>
+There are 3 Bishop compare to normal chess, 2.<br/>
 There is no Castling law in Gliński's hexagonal chess.
 
 More details can be found on [Wikipedia](https://en.wikipedia.org/wiki/Hexagonal_chess) or other websites.
