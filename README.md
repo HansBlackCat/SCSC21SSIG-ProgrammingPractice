@@ -25,6 +25,8 @@ Participating members
 
 ### [Problem 03 - 명령어 맛보기](./__MainProblem__/Problem03.md)
 
+### [Problem 04 - Gliński's hexagonal chess](./__MainProblem__/Problem04.md)
+
 ## Sub Problems
 
 ### [Sub Problem 01 - Exact Cover Problem & Knuth's DLX](./__SubProblem__/SubProblem01.md)
