@@ -1,5 +1,6 @@
 #ifndef CHIP_8_EMULATOR
 #define CHIP_8_EMULATOR
+#include <iostream>
 #include <cstdint>
 #include <string>
 #include <SFML/Window.hpp> // for display & key input
@@ -17,11 +18,11 @@ class Chip8 {
             for (int p = 0; p < 0x800; p++) {
                 pixels[p].setPosition((p & 0x3f) * 8, (p >> 6) * 8);
                 pixels[p].setSize(sf::Vector2f(8.f, 8.f));
-                pixels[p].setFillColor(sf::Color::Transparent);
+                pixels[p].setFillColor(sf::Color::Black);
                 emul_window->draw(pixels[p]);
             } emul_window->display();
         }
-        ~Chip8() { delete[] emul_window; }
+        ~Chip8() { delete emul_window; }
         void init();
         bool load(const std::string &);
         void emulate();
@@ -45,7 +46,6 @@ class Chip8 {
         uint8_t sound_timer;
 
         uint8_t display[0x800]; // 0x40 * 0x20
-        bool display_updated;
         sf::RenderWindow *emul_window;
         sf::RectangleShape pixels[0x800];
         

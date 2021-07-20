@@ -66,22 +66,23 @@ void Chip8::emulate() {
     // this runs forever, unless the emul_window is closed
     sf::Event event;
     auto zero = std::chrono::duration<double, std::ratio<1, 60>>::zero();
-    while (emul_window->pollEvent(event)) {
+    while (emul_window->isOpen()) {
         auto start = std::chrono::high_resolution_clock::now();
-        if (event.type == sf::Event::Closed)
-            break;
+        while (emul_window->pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                return;       
+        }
         // fetch opcode
-        opcode = memory[prog_cnt] << 8 | memory[prog_cnt + 1];
-        show_opcode(opcode);
-        prog_cnt += 2;
-        run_opcode(opcode);
-        // show change on display
-        if (display_updated)
-            update_display();
+        for (int l = 0; l < 10; l++) {
+            opcode = memory[prog_cnt] << 8 | memory[prog_cnt + 1];
+            // show_opcode(opcode, prog_cnt, ix_reg);
+            run_opcode(opcode);
+            prog_cnt += 2;
+        }
         if (delay_timer)
             delay_timer--;
         if (sound_timer) {
-            std::cout << "Sound effect: BEEP!\n";
+            std::cout << "BEEP! (" << (int)sound_timer << " tick left)" << '\n';
             sound_timer--;
         }
         auto end = std::chrono::high_resolution_clock::now();
@@ -96,15 +97,13 @@ void Chip8::emulate() {
 
 void Chip8::terminate() {
     emul_window->close();
-    delete[] this;
 }
 
 void Chip8::update_display() {
     for (int p = 0; p < 0x800; p++) {
-        if (display[p])
-            pixels[p].setFillColor(sf::Color::White);
-        else
-            pixels[p].setFillColor(sf::Color::Transparent);
+        pixels[p].setFillColor(display[p] & 1
+                               ? sf::Color::White
+                               : sf::Color::Black);
         emul_window->draw(pixels[p]);
     } emul_window->display();
 }
@@ -119,7 +118,7 @@ void Chip8::update_display() {
 
 inline uint8_t Chip8::key_pressed() {
     sf::Event event;
-    while (emul_window->pollEvent(event)) {
+    while (emul_window->waitEvent(event)) {
         if (event.type == sf::Event::Closed)
             break;
         if (event.type == sf::Event::KeyPressed) {
@@ -175,9 +174,11 @@ void Chip8::run_opcode(uint16_t opcode) {
             switch (opcode & 0x0fff) {
                 case 0x0e0: // clear screen
                     std::fill_n(display, 0x800, 0);
+                    update_display();
                     break;
                 case 0x0ee: // subroutine
-                    stack[stack_ptr--] = 0;
+                    stack[stack_ptr] = 0;
+                    stack_ptr--;
                     prog_cnt = stack[stack_ptr];
                     break;
                 default:
@@ -185,18 +186,19 @@ void Chip8::run_opcode(uint16_t opcode) {
                     warn_opcode(opcode);
             } break;
         case 0x1000: // jump
-            prog_cnt = opcode & 0x0fff;
+            prog_cnt = (opcode & 0x0fff) - 2;
             break;
         case 0x2000: // subroutine
-            stack[stack_ptr++] = prog_cnt;
-            prog_cnt = opcode & 0x0fff;
+            stack[stack_ptr] = prog_cnt;
+            stack_ptr++;
+            prog_cnt = (opcode & 0x0fff) - 2;
             break;
         case 0x3000: // skip
-            if (reg_mem[(opcode & 0x0f00) >> 8] == opcode & 0x00ff)
+            if (reg_mem[(opcode & 0x0f00) >> 8] == (opcode & 0x00ff))
                 prog_cnt += 2;
             break;
         case 0x4000: // skip
-            if (reg_mem[(opcode & 0x0f00) >> 8] != opcode & 0x00ff)
+            if (reg_mem[(opcode & 0x0f00) >> 8] != (opcode & 0x00ff))
                 prog_cnt += 2;
             break;
         case 0x5000: // skip
@@ -209,9 +211,11 @@ void Chip8::run_opcode(uint16_t opcode) {
             reg_mem[(opcode & 0x0f00) >> 8] = opcode & 0x00ff;
             break;
         case 0x7000: // add
-            if (uint8_t ix = (opcode & 0x0f00) >> 8; ix != 0xf)
-                reg_mem[ix] += opcode & 0x00ff;
-            break;
+            if (uint8_t ix = (opcode & 0x0f00) >> 8; ix != 0xf) {
+                uint16_t tmpsum = reg_mem[ix] + (opcode & 0x00ff);
+                reg_mem[0xf] = tmpsum > 0xff ? 1 : 0;
+                reg_mem[ix] = tmpsum;
+            } break;
         case 0x8000: // logical & arithmetic operation
         {
             uint8_t x = (opcode & 0x0f00) >> 8;
@@ -240,7 +244,7 @@ void Chip8::run_opcode(uint16_t opcode) {
                     reg_mem[x] -= reg_mem[y];
                     break;
                 case 0x6:
-                    reg_mem[0xf] = reg_mem[x] & 0x1 ? 1 : 0;
+                    reg_mem[0xf] = reg_mem[x] & 0x01 ? 1 : 0;
                     reg_mem[x] >>= 1;
                     break;
                 case 0x7:
@@ -248,7 +252,7 @@ void Chip8::run_opcode(uint16_t opcode) {
                     reg_mem[x] = reg_mem[y] - reg_mem[x];
                     break;
                 case 0xe:
-                    reg_mem[0xf] = reg_mem[x] & 0xf ? 1 : 0;
+                    reg_mem[0xf] = reg_mem[x] & 0x80 ? 1 : 0;
                     reg_mem[x] <<= 1;
                     break;
                 default:
@@ -265,7 +269,7 @@ void Chip8::run_opcode(uint16_t opcode) {
             ix_reg = opcode & 0x0fff;
             break;
         case 0xb000: // jump with offset
-            prog_cnt = reg_mem[0] + (opcode & 0x0fff);
+            prog_cnt = reg_mem[0] + (opcode & 0x0fff) - 2;
             break;
         case 0xc000: // random
             reg_mem[(opcode & 0x0f00) >> 8] = rand() & 0xff & opcode;
@@ -283,7 +287,8 @@ void Chip8::run_opcode(uint16_t opcode) {
                         dtmp ^= 1;
                     }
                 }
-            } display_updated = true;
+            }
+            update_display();
         } break;
         case 0xe000: // skip according to key press
         {
@@ -324,18 +329,18 @@ void Chip8::run_opcode(uint16_t opcode) {
                         reg_mem[0xf] = 1;
                     } break;
                 case 0x29: // point to font
-                    ix_reg = x * 5;
+                    ix_reg = reg_mem[x] * 5;
                     break;
                 case 0x33: // hex -> dec conversion
-                    memory[ix_reg]     = reg_mem[x] % 10;
+                    memory[ix_reg]     = reg_mem[x] / 100;
                     memory[ix_reg + 1] = reg_mem[x] / 10 % 10;
-                    memory[ix_reg + 2] = reg_mem[x] / 100;
+                    memory[ix_reg + 2] = reg_mem[x] % 10;
                     break;
-                case 0x55: // dump mem -> reg
+                case 0x55: // dump reg -> mem
                     for (uint8_t i = 0; i <= x; i++)
                         memory[ix_reg + i] = reg_mem[i];
                     break;
-                case 0x65: // load reg -> mem
+                case 0x65: // load mem -> reg
                     for (uint8_t i = 0; i <= x; i++)
                         reg_mem[i] = memory[ix_reg + i];
                     break;
