@@ -15,6 +15,7 @@ mod chess {
 
     use std::{collections::HashMap, convert::TryFrom};
 
+    #[derive(Copy, Clone, PartialEq)]
     pub enum Class {
         Pawn,
         Rook,
@@ -39,10 +40,11 @@ mod chess {
 
     pub mod hex_point {
         use std::convert::TryFrom;
+        use std::fmt::Display;
         use std::ops::{Add, Sub};
 
-        #[derive(Default, Copy, Clone, PartialEq)]
-        pub struct HexPoint(i32, i32);
+        #[derive(Default, Copy, Clone, PartialEq, Eq, Hash)]
+        pub struct HexPoint(pub i8, pub i8);
 
         impl TryFrom<&str> for HexPoint {
             type Error = &'static str;
@@ -54,14 +56,16 @@ mod chess {
                     return Err("Chess Notation: File not parsed properly");
                 }
                 let maybe_rank: Vec<u8> = bytes.collect();
-                let rank: i32 = std::str::from_utf8(maybe_rank.as_slice())
+                let rank: i8 = std::str::from_utf8(maybe_rank.as_slice())
                     .unwrap()
                     .parse()
                     .unwrap();
-                if rank < 0 || rank > 11 {
+
+                let width = i8::try_from(super::super::N).unwrap() * 2 - 1;
+                if rank < 1 || rank > width {
                     return Err("Chess Notation: Rank not parsed properly");
                 }
-                Ok(HexPoint(i32::from(file - b'a'), rank))
+                Ok(HexPoint(i8::try_from(file - b'a').unwrap(), rank - 1))
             }
         }
 
@@ -81,6 +85,14 @@ mod chess {
             }
         }
 
+        impl Display for HexPoint {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                let file = u8::try_from(self.0).unwrap() + b'a';
+                let rank = self.1 + 1;
+                write!(f, "{}{}", file, rank)
+            }
+        }
+
         pub const UP: HexPoint = HexPoint(0, 1);
         pub const DOWN: HexPoint = HexPoint(0, -1);
         pub const L_UP: HexPoint = HexPoint(-1, 0);
@@ -88,6 +100,8 @@ mod chess {
         pub const R_UP: HexPoint = HexPoint(1, 1);
         pub const R_DOWN: HexPoint = HexPoint(1, 0);
     }
+
+    use hex_point::HexPoint;
 
     const DEFAULT_START_POSITIONS: [[&str; 18]; 2] = [
         [
@@ -100,7 +114,7 @@ mod chess {
         ],
     ];
 
-    fn parse_AN(an: &str) -> Result<(Class, hex_point::HexPoint), &str > {
+    fn parse_an(an: &str) -> Result<(Class, HexPoint), &str > {
         let mut iter = an.chars();
         let class = match iter.next().unwrap() {
             'P' => Class::Pawn,
@@ -111,7 +125,7 @@ mod chess {
             'K' => Class::King,
             _ => return Err("Parse Failed: Wrong piece notation"),
         };
-        let pos = hex_point::HexPoint::try_from(iter.as_str());
+        let pos = HexPoint::try_from(iter.as_str());
         if pos.is_err() {
             return Err(pos.err().unwrap())
         }
@@ -119,13 +133,63 @@ mod chess {
         Ok((class, pos.unwrap()))
     }
 
+    /// main struct that manages chess pieces and board status
     struct HexBoard {
-        board: HashMap<hex_point::HexPoint, u8>,
+        board: HashMap<hex_point::HexPoint, Option<u8>>,
+        pieces: Vec<Piece>
     }
 
-    impl HexBoard {}
+    impl HexBoard {
+        fn insert(&mut self, class: Class, color: Color, pos: &HexPoint) {
+            if self.board.contains_key(pos) {
+                let index = self.pieces.len() as u8;
+                let piece = Piece{
+                    class,
+                    color,
+                    index,
+                    is_dead: false,
+                };
+                self.pieces.push(piece);
+                self.board[pos] = Some(index);
 
-    pub fn run_chess() {}
+            } else {
+                panic!("cannot insert to given position");
+            }
+        }
+    }
+
+    impl Default for HexBoard {
+        fn default() -> Self {
+            let mut board: HashMap<hex_point::HexPoint, Option<u8>> = HashMap::new();
+            let n = i8::try_from(super::N).unwrap();
+            let width = 2 * n - 1;
+            for file in 0..width {
+                let i = file - n;
+                let start = if i > 0 { i } else { 0 };
+                let end = if i < 0 { width + i } else { width };
+                for rank in start..end {
+                    board.insert(HexPoint(file, rank), None);
+                }
+            }
+
+            HexBoard{ board, pieces: Vec::new() }
+        }
+    }
+
+    pub fn run_chess() {
+        let mut board: HexBoard = Default::default();
+
+        let mut color_toggle = false;
+        for c in DEFAULT_START_POSITIONS {
+            color_toggle = !color_toggle;
+            let color = if color_toggle { Color::White } else { Color::Black };
+            for s in c {
+                let (class, pos) = parse_an(s).unwrap();
+                board.insert(class, color, &pos);
+            }
+        }
+    }
+
 }
 fn generate_hexagons() {
     let height = N * 4 - 1;
