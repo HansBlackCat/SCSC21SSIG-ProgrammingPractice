@@ -1,6 +1,5 @@
 extern crate termion;
 
-// use std::collections::HashMap;
 use std::fmt::Write as FmtWrite;
 use std::io::Write as IoWrite;
 use std::io::{stdin, stdout};
@@ -14,8 +13,10 @@ static mut HEXAGONS: String = String::new();
 
 mod chess {
 
+    use std::{collections::HashMap, convert::TryFrom};
+
     pub enum Class {
-        Pawn(bool),
+        Pawn,
         Rook,
         Knight,
         Bishop,
@@ -23,6 +24,7 @@ mod chess {
         King,
     }
 
+    #[derive(Copy, Clone, PartialEq)]
     pub enum Color {
         Black,
         White,
@@ -31,19 +33,37 @@ mod chess {
     pub struct Piece {
         class: Class,
         color: Color,
-    }
-
-    impl Piece {
-        fn get_moves(&self) {
-            todo!();
-        }
+        index: u8,
+        is_dead: bool,
     }
 
     pub mod hex_point {
+        use std::convert::TryFrom;
         use std::ops::{Add, Sub};
 
         #[derive(Default, Copy, Clone, PartialEq)]
         pub struct HexPoint(i32, i32);
+
+        impl TryFrom<&str> for HexPoint {
+            type Error = &'static str;
+
+            fn try_from(value: &str) -> Result<Self, Self::Error> {
+                let mut bytes = value.bytes();
+                let file = bytes.next().unwrap();
+                if file < b'a' && file > b'k' {
+                    return Err("Chess Notation: File not parsed properly");
+                }
+                let maybe_rank: Vec<u8> = bytes.collect();
+                let rank: i32 = std::str::from_utf8(maybe_rank.as_slice())
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                if rank < 0 || rank > 11 {
+                    return Err("Chess Notation: Rank not parsed properly");
+                }
+                Ok(HexPoint(i32::from(file - b'a'), rank))
+            }
+        }
 
         impl Add for HexPoint {
             type Output = Self;
@@ -63,11 +83,49 @@ mod chess {
 
         pub const UP: HexPoint = HexPoint(0, 1);
         pub const DOWN: HexPoint = HexPoint(0, -1);
-        pub const L_UP: HexPoint = HexPoint(1, 0);
+        pub const L_UP: HexPoint = HexPoint(-1, 0);
         pub const L_DOWN: HexPoint = HexPoint(-1, -1);
         pub const R_UP: HexPoint = HexPoint(1, 1);
         pub const R_DOWN: HexPoint = HexPoint(1, 0);
     }
+
+    const DEFAULT_START_POSITIONS: [[&str; 18]; 2] = [
+        [
+            "Pb1", "Pc2", "Pd3", "Pe4", "Pf5", "Pg5", "Ph5", "Pi5", "Pj5", "Rc1", "Ri4", "Nd1",
+            "Nh3", "Bf1", "Bf2", "Bf3", "Qe1", "Kg1",
+        ],
+        [
+            "Pb1", "Pc2", "Pd3", "Pe4", "Pf5", "Pg5", "Ph5", "Pi5", "Pj5", "Rc1", "Ri4", "Nd1",
+            "Nh3", "Bf1", "Bf2", "Bf3", "Qe1", "Kg1",
+        ],
+    ];
+
+    fn parse_AN(an: &str) -> Result<(Class, hex_point::HexPoint), &str > {
+        let mut iter = an.chars();
+        let class = match iter.next().unwrap() {
+            'P' => Class::Pawn,
+            'R' => Class::Rook,
+            'N' => Class::Knight,
+            'B' => Class::Bishop,
+            'Q' => Class::Queen,
+            'K' => Class::King,
+            _ => return Err("Parse Failed: Wrong piece notation"),
+        };
+        let pos = hex_point::HexPoint::try_from(iter.as_str());
+        if pos.is_err() {
+            return Err(pos.err().unwrap())
+        }
+
+        Ok((class, pos.unwrap()))
+    }
+
+    struct HexBoard {
+        board: HashMap<hex_point::HexPoint, u8>,
+    }
+
+    impl HexBoard {}
+
+    pub fn run_chess() {}
 }
 fn generate_hexagons() {
     let height = N * 4 - 1;
@@ -115,64 +173,10 @@ fn generate_hexagons() {
     }
 }
 
-fn generate_hexagons_large() {
-    let height = 8 * N - 3;
-    let width = 14 * N - 5;
-    let mut buf_string = String::new();
-
-    for i in 0..height {
-        let blank = {
-            let index = i32::abs(i - (height + 1) / 2);
-            if index % 2 == 0 {
-                width + 1 - 7 * (index / 2)
-            } else {
-                width + 7 - 7 * ((index + 1) / 2)
-            }
-        };
-
-        for j in 0..width {
-            let (slash_pos, hex_len) = match (i + 3 * N) % 4 {
-                0 => (7, 8),
-                1 => (1, 6),
-                2 => (0, 8),
-                3 => (8, 6),
-                _ => panic!("Impossible modular result"),
-            };
-
-            let temp = (j - slash_pos + 14) % 14;
-
-            if i32::abs(j + 1 - (width + 1) / 2) > blank {
-                write!(buf_string, " ").unwrap();
-            } else if hex_len == 8 && temp > hex_len {
-                write!(buf_string, "_").unwrap();
-            } else if temp == 0 {
-                write!(buf_string, "/").unwrap();
-            } else if temp == hex_len {
-                write!(buf_string, "\\").unwrap();
-            } else {
-                write!(buf_string, " ").unwrap();
-            }
-        }
-        write!(buf_string, "\r\n").unwrap();
-    }
-
-    unsafe {
-        HEXAGONS = buf_string;
-    }
-}
-
 fn write_hexagons<W: IoWrite>(screen: &mut W) {
     unsafe {
         write!(screen, "{}", HEXAGONS).unwrap();
     }
-}
-
-fn draw_pieces(/*pieces: &HashMap<>*/) {
-    todo!()
-}
-
-fn hexpos_to_term(pos: (i32, i32)) -> (i32, i32) {
-    todo!();
 }
 
 fn main() {
